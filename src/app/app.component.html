@@ -1,3 +1,30 @@
-<GridLayout backgroundColor="#142c49">
-  <app-line-graph></app-line-graph>
-</GridLayout>
+<Page androidStatusBarBackground="black">
+  <StackLayout backgroundColor="black" class="p-2 pt-3">
+    <label class="text-4xl font-bold">My expenses</label>
+    <ContentView class="mt-3">
+      <app-line-graph></app-line-graph>
+    </ContentView>
+    <label class="text-2xl font-bold mt-3">Bills</label>
+    <GridLayout class="bg-[#161618] mt-2 rounded-t-2xl">
+      <ScrollView height="100%">
+        <StackLayout class="pt-2">
+          <ng-container *ngFor="let item of transactionsData">
+            <FlexboxLayout class=" justify-between py-2 px-2">
+              <FlexboxLayout class="items-center">
+                <image [src]="item.image" height="48"></image>
+                <FlexboxLayout class="flex-col ml-4">
+                  <label class=" text-sm font-bold">{{item.title}} </label>
+                  <label class="text-gray-300">{{item.subTitle}}</label>
+                </FlexboxLayout>
+              </FlexboxLayout>
+              <FlexboxLayout class="flex-col items-end justify-center pr-1">
+                <label class=" text-sm font-bold">${{item.price}}</label>
+                <label class="text-xs ">{{item.date.toLocaleDateString("en-US")}}</label>
+              </FlexboxLayout>
+            </FlexboxLayout>
+          </ng-container>
+        </StackLayout>
+      </ScrollView>
+    </GridLayout>
+  </StackLayout>
+</Page>

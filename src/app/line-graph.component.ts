@@ -5,16 +5,19 @@ import { LoadEventData, TouchGestureEventData } from '@nativescript/core';
 @Component({
   selector: 'app-line-graph',
   template: `
-  <GridLayout rows="10* 30* 60*" columns="* auto" marginTop="20">
-    <Canvas rowSpan=2 colSpan="2" (ready)="onCanvasReady($event)" (touch)="onTouch($event)"></Canvas>
-    <Label col="2" class="text-5xl text-white top-0">\${{value}}</Label>
-    <GridLayout columns="* * * *" height="auto" row="2" colSpan="2" orientation="horizontal">
-      <Button col="0" borderRadius="8" width="24%" backgroundColor="#3c88e1" color="white" (tap)="changeTimePeriod(1)">30 Days</Button>
-      <Button col="1" borderRadius="8" width="24%" backgroundColor="#3c88e1" color="white" (tap)="changeTimePeriod(2)">60 Days</Button>
-      <Button col="2" borderRadius="8" width="24%" backgroundColor="#3c88e1" color="white" (tap)="changeTimePeriod(6)">6 Months</Button>
-      <Button col="3" borderRadius="8" width="24%" backgroundColor="#3c88e1" color="white" (tap)="changeTimePeriod(12)">1 year</Button>
-    </GridLayout>
-  </GridLayout>
+  <StackLayout height="300" class="bg-[#161618] rounded-3xl">
+  <Label  class="text-4xl text-white top-0 p-2">\${{value}}</Label>
+
+    <Canvas rowSpan=2 colSpan="2" height="180" (ready)="onCanvasReady($event)" (touch)="onTouch($event)"></Canvas>
+    <FlexboxLayout class="justify-center items-center" height="60">
+      <ng-container *ngFor="let item of buttons; let i = index">
+         <label class="rounded-full px-2 py-1 text-sm font-bold mx-2 text-[#3399ff]" 
+            [backgroundColor]="currentView == i ? '#3399ff2b': ''" 
+            (tap)="changeTimePeriod(i, item.months)">\{{item.text}}
+          </label>
+       </ng-container>
+    </FlexboxLayout>
+  </StackLayout>
   `,
 })
 export class LineGraphComponent {
@@ -23,7 +26,8 @@ export class LineGraphComponent {
   private width: number;
   private height: number;
   private data: { date: Date; value: number; x: number; y: number }[] = [];
-
+  buttons = [{ months: 1, text: "30 Days" }, { months: 2, text: "60 Days" }, { months: 6, text: "6 Months" }, { months: 12, text: "1 Year" }]
+  currentView = 0;
   value: string = '0';
 
   onCanvasReady(args: LoadEventData) {
@@ -36,7 +40,8 @@ export class LineGraphComponent {
     this.drawLine(this.data);
   }
 
-  changeTimePeriod(months: number) {
+  changeTimePeriod(view: number, months: number) {
+    this.currentView = view;
     const oldData = this.data;
     const newData = this.generateMockData(months);
     this.animateLine(oldData, newData, 0);
@@ -80,9 +85,9 @@ export class LineGraphComponent {
     // gradient.addColorStop(0.75, '#98D1A6');
     // gradient.addColorStop(1, '#FFF6A5');
 
-    gradient._addColorStop(0, 'green');
-    gradient._addColorStop(0.5, 'yellow');
-    gradient._addColorStop(1, 'red');
+    gradient._addColorStop(0, '#3399ff');
+    gradient._addColorStop(0.5, '#64a9f0');
+    gradient._addColorStop(1, 'white');
 
     return gradient;
   };
@@ -174,38 +179,38 @@ export class LineGraphComponent {
     const { minValue, maxValue } = this.calculateYAxisBounds(data);
     const range = maxValue - minValue;
     const padding = range * 0.1;
-  
+
     return data.map((point, i) => {
       const x = (i / (data.length - 1)) * this.width;
       const y =
         (1 - (point.value - (minValue - padding)) / (range + 2 * padding)) *
         this.height;
-  
+
       return { ...point, x, y };
     });
   };
-  
+
   drawLine(data: { date: Date; value: number; x: number; y: number }[]) {
     this.data = this.calculateXYValues(data);
     const gradient = this.getGradient();
-  
+
     this.ctx.clearRect(0, 0, this.width, this.height);
     this.ctx.beginPath();
-  
+
     for (let i = 1; i < this.data.length; i++) {
       const { x, y } = this.data[i];
       const cp1x = (x - this.data[i - 1].x) / 2 + this.data[i - 1].x;
       const cp1y = this.data[i - 1].y;
       const cp2x = (this.data[i - 1].x + x) / 2;
       const cp2y = y;
-  
+
       if (i === 1) {
         this.ctx.moveTo(0, y);
       }
-  
+
       this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
     }
-  
+
     this.ctx.strokeStyle = gradient;
     this.ctx.lineWidth = 8;
     this.ctx.stroke();
