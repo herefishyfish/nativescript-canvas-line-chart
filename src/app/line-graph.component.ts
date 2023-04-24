@@ -21,19 +21,23 @@ import { LoadEventData, TouchGestureEventData } from '@nativescript/core';
   `,
 })
 export class LineGraphComponent {
+  private pointCount = 15;
   private canvas: Canvas;
   private ctx: CanvasRenderingContext2D;
   private width: number;
   private height: number;
+  private dataSet: { date: Date; value: number; x: number; y: number }[] = [];
   private data: { date: Date; value: number; x: number; y: number }[] = [];
-  buttons = [{ months: 1, text: "30 Days" }, { months: 2, text: "60 Days" }, { months: 6, text: "6 Months" }, { months: 12, text: "1 Year" }]
+  private selectedMonths: number = 1;
+  buttons = [{ months: 1, text: "30 Days" }, { months: 2, text: "60 Days" }, { months: 6, text: "6 Months" }, { months: 12, text: "1 Year" }];
   currentView = 0;
   value: string = '0';
 
   onCanvasReady(args: LoadEventData) {
     this.canvas = args.object as Canvas;
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
-    this.data = this.generateMockData(3);
+    this.dataSet = this.generateMockData();
+    this.data = this.dataSet.slice(0, this.pointCount);
     this.width = Number(this.canvas.width);
     this.height = Number(this.canvas.height);
     this.animateLine([{ date: new Date(), value: 1 }], this.data, 0);
@@ -43,12 +47,17 @@ export class LineGraphComponent {
   changeTimePeriod(view: number, months: number) {
     this.currentView = view;
     const oldData = this.data;
-    const newData = this.generateMockData(months);
+    if(this.selectedMonths == months) {
+      this.dataSet = this.generateMockData();
+    };
+    this.selectedMonths = months;
+    const newData = this.dataSet.slice(0, months * this.pointCount); 
+    
     this.animateLine(oldData, newData, 0);
   }
 
   previousValue: number;
-  generateMockData = (months: number) => {
+  generateMockData = () => {
     const data = [];
     const date = new Date();
     const maxChange = 2;
@@ -56,12 +65,11 @@ export class LineGraphComponent {
     this.previousValue = Math.random() * 100;
     data.push({ date: new Date(date), value: this.previousValue });
 
-    for (let i = 0; i < months * 30; i++) {
+    for (let i = 0; i < 12 * this.pointCount; i++) {
       date.setDate(date.getDate() - 1);
       const change = Math.random() * maxChange * 2 - maxChange;
       let newValue = this.previousValue + change;
 
-      newValue = Math.max(0, Math.min(newValue, 100));
       data.push({ date: new Date(date), value: newValue });
 
       this.previousValue = newValue;
